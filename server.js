@@ -4,13 +4,10 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-// IMPORTANT: allows your GitHub site to call backend
 app.use(cors());
 app.use(express.json());
 
-// -------------------------
-// PLAN MAPPING (MUST MATCH FRONTEND)
-// -------------------------
+// ---- PRICES ----
 const plans = {
   daily: "price_1TVCwOCDs6LQCbIGcaaB93pJ",
   weekly: "price_1TVCwjCDs6LQCbIGf7MsXlXv",
@@ -19,18 +16,13 @@ const plans = {
   yearly: "price_1TVCy0CDs6LQCbIGAy43tJ4u"
 };
 
-// -------------------------
-// HEALTH CHECK ROUTE
-// -------------------------
+// ---- TEST ROUTE (fixes 404 check) ----
 app.get("/", (req, res) => {
-  res.send("Stripe backend is running");
+  res.send("Backend is running");
 });
 
-// -------------------------
-// CREATE CHECKOUT SESSION
-// -------------------------
+// ---- STRIPE CHECKOUT ----
 app.post("/create-checkout-session", async (req, res) => {
-
   try {
 
     const { planId } = req.body;
@@ -42,8 +34,8 @@ app.post("/create-checkout-session", async (req, res) => {
     }
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
       mode: "payment",
+      payment_method_types: ["card"],
       line_items: [
         {
           price: price,
@@ -57,16 +49,11 @@ app.post("/create-checkout-session", async (req, res) => {
     return res.json({ url: session.url });
 
   } catch (err) {
-    console.error("Stripe error:", err.message);
+    console.error(err);
     return res.status(500).json({ error: err.message });
   }
 });
 
-// -------------------------
-// START SERVER
-// -------------------------
+// ---- START SERVER ----
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+app.listen(PORT, () => console.log("Server running"));
